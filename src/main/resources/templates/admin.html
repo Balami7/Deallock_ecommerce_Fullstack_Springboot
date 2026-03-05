@@ -9,12 +9,96 @@
   <link rel="icon" type="image/x-icon" href="/frontend/logo.jpeg">
   <title>Admin - DealLock</title>
   <style>
+    .admin-layout {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .admin-sidebar {
+      position: sticky;
+      top: 92px;
+      background: #0b1220;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .admin-sidebar h4 {
+      color: #e2e8f0;
+      font-size: 14px;
+      margin: 0 0 10px;
+    }
+    .admin-side-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .admin-side-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 13px;
+      color: #dbeafe;
+      background: #111827;
+      border: 1px solid #223047;
+    }
+    .admin-side-link:hover {
+      background: #1e3a5f;
+      color: #93c5fd;
+    }
+    .admin-content {
+      min-width: 0;
+    }
+    .admin-top-filter {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: end;
+      margin-bottom: 16px;
+      position: sticky;
+      top: 88px;
+      z-index: 5;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .admin-filter-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 170px;
+    }
+    .admin-filter-field label {
+      color: #e2e8f0;
+      font-size: 13px;
+    }
+    .admin-filter-field input {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #0b1220;
+      color: #e2e8f0;
+    }
+    .admin-block {
+      width: 100%;
+      margin-top: 22px;
+    }
     .admin-section-title {
       color: #ffffff;
       background: #0f1b2b;
       padding: 8px 12px;
       border-radius: 10px;
       display: inline-block;
+      font-size: 16px;
+      line-height: 1.2;
     }
     .btn-submit.is-processing,
     .btn-cancel.is-processing {
@@ -63,6 +147,17 @@
       color: #60a5fa;
       border-color: rgba(96, 165, 250, 0.5);
     }
+    @media (max-width: 980px) {
+      .admin-layout {
+        grid-template-columns: 1fr;
+      }
+      .admin-sidebar {
+        position: static;
+      }
+      .admin-top-filter {
+        position: static;
+      }
+    }
   </style>
 </head>
 <body>
@@ -103,28 +198,34 @@
     </nav>
   </header>
 
-  <main class="dashboard-container" style="padding: 24px;">
-    <section style="width:100%;">
-      <div class="admin-folder-row">
-        <a href="/admin/payment-proofs" class="admin-folder"><i class="fa-regular fa-folder-open"></i> Payment Proofs</a>
-        <a href="#confirmed-payments" class="admin-folder"><i class="fa-regular fa-circle-check"></i> Confirmed Payments</a>
-        <a href="#payment-not-received" class="admin-folder"><i class="fa-regular fa-circle-xmark"></i> Payment Not Received</a>
-        <a href="#secured-deals" class="admin-folder"><i class="fa-solid fa-lock"></i> Secured Deals</a>
+  <main class="admin-layout">
+    <aside class="admin-sidebar">
+      <h4>Quick Access</h4>
+      <div class="admin-side-nav">
+        <a href="#pending-deals" class="admin-side-link"><i class="fa-regular fa-hourglass-half"></i> Pending Deals</a>
+        <a href="#approved-deals" class="admin-side-link"><i class="fa-regular fa-circle-check"></i> Approved Deals</a>
+        <a href="#confirmed-payments" class="admin-side-link"><i class="fa-solid fa-check-double"></i> Confirmed Payments</a>
+        <a href="#payment-not-received" class="admin-side-link"><i class="fa-regular fa-circle-xmark"></i> Payment Not Received</a>
+        <a href="#secured-deals" class="admin-side-link"><i class="fa-solid fa-lock"></i> Secured Deals</a>
+        <a href="#rejected-deals" class="admin-side-link"><i class="fa-solid fa-ban"></i> Rejected Deals</a>
+        <a href="/admin/payment-proofs" class="admin-side-link"><i class="fa-regular fa-folder-open"></i> Payment Proofs</a>
       </div>
-      <form method="get" action="/admin" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:16px;">
-        <div style="display:flex; flex-direction:column; gap:6px;">
-          <label for="start-date" style="color:#e2e8f0;">Start Date</label>
-          <input type="date" id="start-date" name="start" th:value="${start}" style="padding:6px 10px; border-radius:8px; border:1px solid #334155;">
+    </aside>
+    <section class="admin-content">
+      <form method="get" action="/admin" class="admin-top-filter">
+        <div class="admin-filter-field">
+          <label for="start-date">Start Date</label>
+          <input type="date" id="start-date" name="start" th:value="${start}">
         </div>
-        <div style="display:flex; flex-direction:column; gap:6px;">
-          <label for="end-date" style="color:#e2e8f0;">End Date</label>
-          <input type="date" id="end-date" name="end" th:value="${end}" style="padding:6px 10px; border-radius:8px; border:1px solid #334155;">
+        <div class="admin-filter-field">
+          <label for="end-date">End Date</label>
+          <input type="date" id="end-date" name="end" th:value="${end}">
         </div>
-        <button type="submit" class="btn-submit" style="align-self:flex-end;">Filter</button>
-        <a href="/admin" class="btn-cancel" style="align-self:flex-end; text-decoration:none;">Clear</a>
+        <button type="submit" class="btn-submit">Filter</button>
+        <a href="/admin" class="btn-cancel" style="text-decoration:none;">Clear</a>
       </form>
 
-      <h2 class="admin-section-title" style="margin-bottom:16px;">Pending Deals</h2>
+      <h2 id="pending-deals" class="admin-section-title" style="margin-bottom:16px;">Pending Deals</h2>
 
       <div th:if="${message}" class="signup-error" style="margin-bottom:12px;">
         <span th:if="${message == 'approved'}">Deal approved.</span>
@@ -176,7 +277,7 @@
       </div>
     </section>
 
-    <section style="width:100%; margin-top:28px;">
+    <section class="admin-block" id="approved-deals">
       <h2 class="admin-section-title" style="margin-bottom:16px;">Approved Deals</h2>
       <div th:if="${#lists.isEmpty(approvedDeals)}">
         <p>No approved deals yet.</p>
@@ -226,7 +327,7 @@
       </div>
     </section>
 
-    <section style="width:100%; margin-top:28px;" id="confirmed-payments">
+    <section class="admin-block" id="confirmed-payments">
       <h2 class="admin-section-title" style="margin-bottom:16px;">Confirmed Payments</h2>
       <div th:if="${#lists.isEmpty(paymentConfirmedDeals)}">
         <p>No confirmed payments yet.</p>
@@ -250,7 +351,7 @@
       </div>
     </section>
 
-    <section style="width:100%; margin-top:28px;" id="payment-not-received">
+    <section class="admin-block" id="payment-not-received">
       <h2 class="admin-section-title" style="margin-bottom:16px;">Payment Not Received</h2>
       <div th:if="${#lists.isEmpty(paymentNotReceivedDeals)}">
         <p>No payment issues logged yet.</p>
@@ -274,7 +375,7 @@
       </div>
     </section>
 
-    <section style="width:100%; margin-top:28px;" id="secured-deals">
+    <section class="admin-block" id="secured-deals">
       <h2 class="admin-section-title" style="margin-bottom:16px;">Secured Deals</h2>
       <div th:if="${#lists.isEmpty(securedDeals)}">
         <p>No secured deals yet.</p>
@@ -297,7 +398,7 @@
       </div>
     </section>
 
-    <section style="width:100%; margin-top:28px;">
+    <section class="admin-block" id="rejected-deals">
       <h2 class="admin-section-title" style="margin-bottom:16px;">Rejected Deals</h2>
       <div th:if="${#lists.isEmpty(rejectedDeals)}">
         <p>No rejected deals yet.</p>
