@@ -28,7 +28,6 @@ public class RegisterController {
     @GetMapping
     public String register(Model model){
         model.addAttribute(new RegisterDto());
-
         return "register";
     }
     @PostMapping
