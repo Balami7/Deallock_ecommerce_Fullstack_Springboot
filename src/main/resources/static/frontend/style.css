@@ -66,6 +66,9 @@ header {
   list-style: none;
   display: flex;
   gap: 1.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: 0.5rem;
 }
 
 .nav-links a {
