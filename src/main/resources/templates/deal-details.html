@@ -10,6 +10,11 @@
   <style>
     body { background: #ffffff; color: #111111; }
     .dashboard-container { color: #111111; }
+    .subpage-main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 120px 24px 32px;
+    }
     .deal-card {
       background: #ffffff;
       border: 1px solid #e5e7eb;
@@ -24,11 +29,27 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
+    .deal-photo-box {
+      margin-top: 10px;
+      max-width: 360px;
+      padding: 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+    .deal-photo-box img {
+      width: 100%;
+      display: block;
+      border-radius: 10px;
+      object-fit: cover;
+    }
     @media (max-width: 768px) {
       .deal-grid { grid-template-columns: 1fr; }
       .navbar { flex-wrap: wrap; }
       .nav-links { gap: 10px; flex-wrap: wrap; margin-top: 8px; }
       .nav-links li a { display: inline-flex; }
+      .subpage-main { padding-top: 130px; }
+      .deal-photo-box { max-width: 100%; }
     }
   </style>
 </head>
@@ -49,7 +70,7 @@
     </nav>
   </header>
 
-  <main class="dashboard-container" style="padding: 40px 24px;">
+  <main class="dashboard-container subpage-main">
     <section class="deal-card" style="width:100%; max-width:900px; margin:0 auto;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
         <h2 class="deal-title" th:text="${deal.title}">Deal Title</h2>
@@ -122,8 +143,8 @@
 
       <div style="margin-top:16px;" th:if="${deal.itemPhoto != null}">
         <strong>Item Photo</strong>
-        <div style="margin-top:8px;">
-          <img th:src="@{'/api/deals/' + ${deal.id} + '/photo'}" alt="Deal item photo" style="max-width:100%; border-radius:12px;">
+        <div class="deal-photo-box">
+          <img th:src="@{'/api/deals/' + ${deal.id} + '/photo'}" alt="Deal item photo">
         </div>
       </div>
     </section>

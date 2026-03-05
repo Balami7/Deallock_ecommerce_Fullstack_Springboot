@@ -9,6 +9,11 @@
   <title>Track Deal - DealLock</title>
   <style>
     body { background:#ffffff; color:#111111; }
+    .subpage-main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 120px 24px 32px;
+    }
     .track-card { max-width: 800px; margin: 0 auto; padding: 20px; border:1px solid #e5e7eb; border-radius:16px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
     .track-item { display:flex; gap:12px; align-items:flex-start; margin:12px 0; }
     .track-dot {
@@ -31,6 +36,9 @@
     .track-item.active .track-title { color:#111111; }
     .track-sub { color:#94a3b8; font-size: 13px; }
     .track-item.active .track-sub { color:#64748b; }
+    @media (max-width: 768px) {
+      .subpage-main { padding-top: 130px; }
+    }
   </style>
 </head>
 <body>
@@ -49,7 +57,7 @@
     </nav>
   </header>
 
-  <main class="dashboard-container" style="padding: 24px;">
+  <main class="dashboard-container subpage-main">
     <div class="track-card">
       <div class="deal-title" th:text="${deal.title}">Deal Title</div>
 
