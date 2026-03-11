@@ -104,7 +104,7 @@
 
   <aside class="sidebar">
 
-    <div class="profile-section">
+    <div class="profile-section sidebar-card">
       <div class="profile-avatar-wrapper">
         <img 
           th:src="${currentUser != null && currentUser.profileImage != null ? '/profile/image' : '/frontend/logo.jpeg'}"
@@ -122,24 +122,24 @@
       </h2>
     </div>
 
-    <div class="active-deals-section">
+    <div class="active-deals-section sidebar-card">
       <div th:if="${param.upload}" class="signup-error" style="margin-bottom:8px;">
         <span th:if="${param.upload[0] == 'success'}">Profile photo updated.</span>
         <span th:if="${param.upload[0] == 'failed'}">Profile photo upload failed.</span>
       </div>
-      <form action="/profile/upload" method="post" enctype="multipart/form-data" style="margin-bottom:12px;">
+      <form action="/profile/upload" method="post" enctype="multipart/form-data" class="profile-upload-form">
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-        <input type="file" name="profileImage" accept="image/*" required>
-        <button type="submit" class="btn-submit" style="margin-top:8px;">Update Photo</button>
+        <label class="profile-upload-label" for="profileImage">Update Photo</label>
+        <input id="profileImage" class="profile-upload-input" type="file" name="profileImage" accept="image/*" required>
+        <button type="submit" class="btn-submit profile-upload-button">Save Photo</button>
       </form>
     </div>
 
-   <div class="active-deals-section">
-  <h3>Active Deals</h3>
-  <div id="deals-message" class="signup-error" style="margin-bottom:8px;"></div>
-  <div class="deals-list" id="deals-list">
-  </div>
-</div>
+    <div class="active-deals-section sidebar-card">
+      <h3>Active Deals</h3>
+      <div id="deals-message" class="signup-error" style="margin-bottom:8px;"></div>
+      <div class="deals-list" id="deals-list"></div>
+    </div>
 
   </aside>
 

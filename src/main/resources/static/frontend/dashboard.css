@@ -206,10 +206,24 @@
   flex-shrink: 0;
 }
 
+.sidebar-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px 16px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  margin-bottom: 18px;
+}
+
 .profile-section {
   text-align: center;
   margin-bottom: 40px;
   padding-top: 70px;
+}
+
+.profile-section.sidebar-card {
+  padding-top: 28px;
+  margin-bottom: 18px;
 }
 
 .profile-avatar-wrapper {
@@ -247,6 +261,29 @@
   color: #1f2937;
   margin: 0 0 16px 8px;
   font-weight: 700;
+}
+
+.profile-upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-upload-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.profile-upload-input {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+}
+
+.profile-upload-button {
+  margin-top: 4px;
 }
 
 .deals-list {
