@@ -37,13 +37,6 @@ twilio:
   phone-number: ${TWILIO_PHONE_NUMBER:}
   whatsapp-number: ${TWILIO_WHATSAPP_NUMBER:}
 
-termii:
-  base-url: ${TERMII_BASE_URL:https://api.ng.termii.com/api}
-  api-key: ${TERMII_API_KEY:}
-  sender-id: ${TERMII_SENDER_ID:}
-  sms-channel: ${TERMII_SMS_CHANNEL:dnd}
-  whatsapp-sender: ${TERMII_WHATSAPP_SENDER:}
-
 
 server:
   forward-headers-strategy: native
