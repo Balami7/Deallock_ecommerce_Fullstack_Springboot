@@ -204,7 +204,15 @@ public class AdminController {
         if (securedPhoto != null && !securedPhoto.isEmpty() && securedPhoto.getSize() > MAX_UPLOAD_BYTES) {
             return "redirect:/admin?message=secured-too-large";
         }
-        dealRepository.findById(id).ifPresent(deal -> {
+        var dealOpt = dealRepository.findById(id);
+        if (dealOpt.isEmpty()) {
+            return "redirect:/admin?message=secured-not-confirmed";
+        }
+        var deal = dealOpt.get();
+        if (deal.getPaymentStatus() == null || !deal.getPaymentStatus().equalsIgnoreCase("PAID_CONFIRMED")) {
+            return "redirect:/admin?message=secured-not-confirmed";
+        }
+        if (!deal.isSecured()) {
             deal.setSecured(true);
             deal.setSecuredAt(Instant.now());
             if (securedPhoto != null && !securedPhoto.isEmpty()) {
@@ -226,7 +234,7 @@ public class AdminController {
                     "Deal Secured",
                     "Deal secured: " + safe(deal.getTitle()),
                     "Deal secured: " + safe(deal.getTitle()));
-        });
+        }
         return "redirect:/admin?message=secured";
     }
 
