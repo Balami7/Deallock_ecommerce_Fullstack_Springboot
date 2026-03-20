@@ -20,8 +20,12 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
   servlet:
     multipart:
-      max-file-size: 500KB
-      max-request-size: 500KB
+      max-file-size: 2MB
+      max-request-size: 2MB
+
+server:
+  tomcat:
+    max-part-count: 200
 
 app:
   base-url: http://localhost:8080

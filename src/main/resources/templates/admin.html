@@ -351,7 +351,7 @@
             <span th:if="${message == 'payment-confirmed'}">Payment confirmed.</span>
             <span th:if="${message == 'payment-not-received'}">Payment not received.</span>
             <span th:if="${message == 'secured'}">Deal secured.</span>
-            <span th:if="${message == 'secured-too-large'}">Secured photo must be at most 500KB.</span>
+            <span th:if="${message == 'secured-too-large'}">Secured photo must be at most 2MB.</span>
             <span th:if="${message == 'secured-not-confirmed'}">Confirm payment before securing a deal.</span>
           </div>
           <div th:if="${#lists.isEmpty(pendingDeals)}">

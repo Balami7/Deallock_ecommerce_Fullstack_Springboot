@@ -33,7 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/deals")
 public class DealApiController {
 
-    private static final long MAX_UPLOAD_BYTES = 500L * 1024L;
+    private static final long MAX_UPLOAD_BYTES = 2L * 1024L * 1024L;
 
     private final DealRepository dealRepository;
     private final UserRepository userRepository;
@@ -149,7 +149,7 @@ public class DealApiController {
 
         if (itemPhoto != null && !itemPhoto.isEmpty()) {
             if (itemPhoto.getSize() > MAX_UPLOAD_BYTES) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Item photo must be at most 500KB."));
+                return ResponseEntity.badRequest().body(Map.of("message", "Item photo must be at most 2MB."));
             }
             deal.setItemPhoto(itemPhoto.getBytes());
             deal.setItemPhotoContentType(itemPhoto.getContentType());
@@ -348,7 +348,7 @@ public class DealApiController {
             return ResponseEntity.badRequest().body(Map.of("message", "Payment proof is required"));
         }
         if (paymentProof.getSize() > MAX_UPLOAD_BYTES) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Payment proof must be at most 500KB."));
+            return ResponseEntity.badRequest().body(Map.of("message", "Payment proof must be at most 2MB."));
         }
 
         var dealOpt = dealRepository.findById(id);
