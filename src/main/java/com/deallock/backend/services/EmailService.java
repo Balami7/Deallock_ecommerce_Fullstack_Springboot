@@ -95,6 +95,14 @@ public class EmailService {
         send(email, "Activate your account", "Click: " + link);
     }
 
+    public void sendLoginAlert(String email, String details) {
+        send(email, "New login to your DealLock account", details);
+    }
+
+    public void sendWelcomeEmail(String email, String details) {
+        send(email, "Welcome to DealLock", details);
+    }
+
     public void sendPasswordResetLink(String email, String link) {
         send(email, "Reset your password", "Click: " + link);
     }

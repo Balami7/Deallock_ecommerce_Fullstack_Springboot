@@ -3,6 +3,7 @@ package com.deallock.backend.controllers;
 import com.deallock.backend.repositories.ActivationTokenRepository;
 import com.deallock.backend.repositories.UserRepository;
 import com.deallock.backend.services.AuditLogService;
+import com.deallock.backend.services.EmailService;
 import java.time.Instant;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,13 +15,16 @@ public class ActivationController {
     private final ActivationTokenRepository activationRepo;
     private final UserRepository userRepository;
     private final AuditLogService auditLogService;
+    private final EmailService emailService;
 
     public ActivationController(ActivationTokenRepository activationRepo,
                                 UserRepository userRepository,
-                                AuditLogService auditLogService) {
+                                AuditLogService auditLogService,
+                                EmailService emailService) {
         this.activationRepo = activationRepo;
         this.userRepository = userRepository;
         this.auditLogService = auditLogService;
+        this.emailService = emailService;
     }
 
     @GetMapping("/activate")
@@ -51,7 +55,18 @@ public class ActivationController {
         entry.setUsed(true);
         activationRepo.save(entry);
 
+        String welcomeMessage = buildWelcomeMessage(user.getFullName());
+        emailService.sendWelcomeEmail(user.getEmail(), welcomeMessage);
+
         auditLogService.log("ACTIVATION", entry.getEmail(), request, true, null);
         return "redirect:/login?activated=true";
+    }
+
+    private String buildWelcomeMessage(String fullName) {
+        String name = (fullName == null || fullName.isBlank()) ? "there" : fullName;
+        return "Hi " + name + ",\n\n"
+                + "Welcome to DealLock. We secure your deals and support your purchases with speed, trust, and transparency.\n"
+                + "We’re glad to have you with us — thanks for choosing DealLock.\n\n"
+                + "DealLock Team";
     }
 }
