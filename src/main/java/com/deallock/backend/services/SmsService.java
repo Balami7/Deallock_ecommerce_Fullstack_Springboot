@@ -19,7 +19,7 @@ public class SmsService {
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${termii.base-url:https://api.ng.termii.com/api}")
     private String baseUrl;
@@ -33,10 +33,6 @@ public class SmsService {
     private String whatsappSender;
     @Value("${app.admin-phones:}")
     private String adminPhones;
-
-    public SmsService(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
 
     private boolean isSmsConfigured() {
         return apiKey != null && !apiKey.isBlank()
