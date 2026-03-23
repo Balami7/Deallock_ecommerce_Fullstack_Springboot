@@ -74,6 +74,37 @@ public class AdminController {
                 .filter(d -> "Approved".equalsIgnoreCase(d.getStatus()))
                 .filter(Deal::isSecured)
                 .toList();
+        List<Deal> balancePaymentDeals = allDeals.stream()
+                .filter(d -> "Approved".equalsIgnoreCase(d.getStatus()))
+                .filter(Deal::isSecured)
+                .filter(d -> d.getBalancePaymentStatus() == null
+                        || !"PAID_CONFIRMED".equalsIgnoreCase(d.getBalancePaymentStatus()))
+                .toList();
+        List<Deal> deliveryInitiationDeals = allDeals.stream()
+                .filter(d -> "Approved".equalsIgnoreCase(d.getStatus()))
+                .filter(Deal::isSecured)
+                .filter(d -> "PAID_CONFIRMED".equalsIgnoreCase(d.getBalancePaymentStatus()))
+                .filter(d -> d.getDeliveryInitiatedAt() == null)
+                .toList();
+        List<Deal> inTransitDeals = allDeals.stream()
+                .filter(d -> "Approved".equalsIgnoreCase(d.getStatus()))
+                .filter(d -> d.getDeliveryInitiatedAt() != null)
+                .filter(d -> d.getDeliveryConfirmedAt() == null)
+                .toList();
+        List<Deal> deliveryConfirmationDeals = allDeals.stream()
+                .filter(d -> "Approved".equalsIgnoreCase(d.getStatus()))
+                .filter(d -> d.getDeliveryInitiatedAt() != null)
+                .filter(Deal::isDeliveryConfirmedByUser)
+                .filter(d -> d.getDeliveryConfirmedAt() == null)
+                .toList();
+        List<Deal> feedbackDeals = allDeals.stream()
+                .filter(d -> "Approved".equalsIgnoreCase(d.getStatus()))
+                .filter(d -> d.getFeedback() != null && !d.getFeedback().isBlank())
+                .toList();
+        List<Deal> concludedDeals = allDeals.stream()
+                .filter(d -> "Approved".equalsIgnoreCase(d.getStatus()))
+                .filter(d -> d.getDeliveryConfirmedAt() != null)
+                .toList();
 
         model.addAttribute("pendingDeals", allDeals.stream()
                 .filter(d -> d.getStatus() == null || "Pending Approval".equalsIgnoreCase(d.getStatus()))
@@ -87,6 +118,12 @@ public class AdminController {
         model.addAttribute("paymentConfirmedDeals", paymentConfirmedDeals);
         model.addAttribute("paymentNotReceivedDeals", paymentNotReceivedDeals);
         model.addAttribute("securedDeals", securedDeals);
+        model.addAttribute("balancePaymentDeals", balancePaymentDeals);
+        model.addAttribute("deliveryInitiationDeals", deliveryInitiationDeals);
+        model.addAttribute("inTransitDeals", inTransitDeals);
+        model.addAttribute("deliveryConfirmationDeals", deliveryConfirmationDeals);
+        model.addAttribute("feedbackDeals", feedbackDeals);
+        model.addAttribute("concludedDeals", concludedDeals);
         model.addAttribute("message", message);
         model.addAttribute("start", start);
         model.addAttribute("end", end);
@@ -237,6 +274,63 @@ public class AdminController {
                     "Deal secured: " + safe(deal.getTitle()));
         }
         return "redirect:/admin?message=secured";
+    }
+
+    @PostMapping("/admin/deals/{id}/balance-confirmed")
+    public String balanceConfirmed(@PathVariable("id") Long id) {
+        dealRepository.findById(id).ifPresent(deal -> {
+            deal.setBalancePaymentStatus("PAID_CONFIRMED");
+            dealRepository.save(deal);
+            notifier.notifyUser(deal.getUser(),
+                    "Balance payment confirmed for your deal.",
+                    "Balance Payment Confirmed",
+                    "Balance payment confirmed for your deal: " + safe(deal.getTitle()),
+                    "Balance payment confirmed for your deal.");
+            notifier.notifyAdmins(
+                    "Balance payment confirmed: " + safe(deal.getTitle()),
+                    "Balance Payment Confirmed",
+                    "Balance payment confirmed: " + safe(deal.getTitle()),
+                    "Balance payment confirmed: " + safe(deal.getTitle()));
+        });
+        return "redirect:/admin?message=balance-confirmed";
+    }
+
+    @PostMapping("/admin/deals/{id}/delivery-initiated")
+    public String deliveryInitiated(@PathVariable("id") Long id) {
+        dealRepository.findById(id).ifPresent(deal -> {
+            deal.setDeliveryInitiatedAt(Instant.now());
+            dealRepository.save(deal);
+            notifier.notifyUser(deal.getUser(),
+                    "Delivery initiated for your deal.",
+                    "Delivery Initiated",
+                    "Delivery initiated for your deal: " + safe(deal.getTitle()),
+                    "Delivery initiated for your deal.");
+            notifier.notifyAdmins(
+                    "Delivery initiated: " + safe(deal.getTitle()),
+                    "Delivery Initiated",
+                    "Delivery initiated: " + safe(deal.getTitle()),
+                    "Delivery initiated: " + safe(deal.getTitle()));
+        });
+        return "redirect:/admin?message=delivery-initiated";
+    }
+
+    @PostMapping("/admin/deals/{id}/delivery-confirmed")
+    public String deliveryConfirmed(@PathVariable("id") Long id) {
+        dealRepository.findById(id).ifPresent(deal -> {
+            deal.setDeliveryConfirmedAt(Instant.now());
+            dealRepository.save(deal);
+            notifier.notifyUser(deal.getUser(),
+                    "Delivery confirmed by admin.",
+                    "Delivery Confirmation",
+                    "Delivery confirmed for your deal: " + safe(deal.getTitle()),
+                    "Delivery confirmed for your deal.");
+            notifier.notifyAdmins(
+                    "Delivery confirmed: " + safe(deal.getTitle()),
+                    "Delivery Confirmation",
+                    "Delivery confirmed: " + safe(deal.getTitle()),
+                    "Delivery confirmed: " + safe(deal.getTitle()));
+        });
+        return "redirect:/admin?message=delivery-confirmed";
     }
 
     @PostMapping("/admin/deals/{id}/delete")

@@ -81,6 +81,10 @@ async function loadDeals() {
       const paymentStatus = (deal.paymentStatus || 'NOT_PAID').toLowerCase();
       const isPaymentPending = paymentStatus === 'paid_pending_confirmation';
       const isPaymentConfirmed = paymentStatus === 'paid_confirmed';
+      const balancePaymentStatus = (deal.balancePaymentStatus || 'NOT_PAID').toLowerCase();
+      const isBalancePaidConfirmed = balancePaymentStatus === 'paid_confirmed';
+      const isBalancePaidPending = balancePaymentStatus === 'paid_pending_confirmation';
+      const isSecured = !!deal.secured;
       const rejectionReason = deal.rejectionReason && String(deal.rejectionReason).trim()
         ? String(deal.rejectionReason)
         : '';
@@ -96,9 +100,12 @@ async function loadDeals() {
           <a class="btn-submit deal-details-link" href="/dashboard/deal/${deal.id}">See Details</a>
           <a class="btn-submit deal-details-link" href="/dashboard/deal/${deal.id}/track">Track Deal</a>
           ${isApproved && !isPaymentConfirmed && !isPaymentPending ? `<a class="btn-submit" href="/dashboard/deal/${deal.id}/pay">Pay</a>` : ''}
+          ${isSecured && !isBalancePaidConfirmed && !isBalancePaidPending ? `<a class="btn-submit" href="/dashboard/deal/${deal.id}/balance-pay">Pay Balance</a>` : ''}
           ${isPaymentPending ? `<span class="deal-status" style="font-weight:600;">Processing</span>` : ''}
+          ${isBalancePaidPending ? `<span class="deal-status" style="font-weight:600;">Balance Processing</span>` : ''}
           ${isPending ? `<button class="btn-cancel cancel-deal-btn" data-deal-id="${deal.id}" type="button">Cancel Deal</button>` : ''}
           ${isPaymentConfirmed ? `<span class="deal-status" style="font-weight:600;">Paid</span>` : ''}
+          ${isBalancePaidConfirmed ? `<span class="deal-status" style="font-weight:600;">Balance Paid</span>` : ''}
         </div>
       `;
       dealsList.appendChild(card);

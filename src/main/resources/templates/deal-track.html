@@ -144,7 +144,102 @@
           <div class="track-sub" th:if="${deal.securedItemPhoto != null}">Secured item photo is available in Deal Details.</div>
         </div>
       </div>
+
+      <div class="track-item" th:classappend="${deal.secured} ? 'active' : ''">
+        <div class="track-dot"></div>
+        <div>
+          <div class="track-title">Pay Balance</div>
+          <div class="track-sub">Upload your balance payment receipt</div>
+          <div class="track-sub" th:if="${deal.balancePaymentStatus != null && deal.balancePaymentStatus.equalsIgnoreCase('PAID_PENDING_CONFIRMATION')}">Balance payment processing</div>
+          <div class="track-sub" th:if="${deal.secured && (deal.balancePaymentStatus == null || deal.balancePaymentStatus.equalsIgnoreCase('NOT_PAID'))}">
+            <a th:href="@{'/dashboard/deal/' + ${deal.id} + '/balance-pay'}">Pay Balance</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="track-item" th:classappend="${deal.balancePaymentStatus != null && deal.balancePaymentStatus.equalsIgnoreCase('PAID_CONFIRMED')} ? 'active' : ''">
+        <div class="track-dot"></div>
+        <div>
+          <div class="track-title">Balance Payment Confirmed</div>
+          <div class="track-sub">Balance payment verified by admin</div>
+        </div>
+      </div>
+
+      <div class="track-item" th:classappend="${deal.deliveryInitiatedAt != null} ? 'active' : ''">
+        <div class="track-dot"></div>
+        <div>
+          <div class="track-title">Delivery Initiated</div>
+          <div class="track-sub">We have initiated delivery</div>
+        </div>
+      </div>
+
+      <div class="track-item" th:classappend="${deal.deliveryConfirmedByUser} ? 'active' : ''">
+        <div class="track-dot"></div>
+        <div>
+          <div class="track-title">Item Delivered</div>
+          <div class="track-sub" th:text="${deal.deliveryConfirmedByUser} ? 'You confirmed delivery' : 'Confirm when item arrives'">Confirm when item arrives</div>
+          <div class="track-sub" th:if="${deal.deliveryInitiatedAt != null && !deal.deliveryConfirmedByUser}">
+            <button class="btn-submit" id="confirm-delivery-btn" th:data-deal-id="${deal.id}" type="button">Confirm Item Received</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="track-item" th:classappend="${deal.feedbackSubmittedAt != null} ? 'active' : ''">
+        <div class="track-dot"></div>
+        <div>
+          <div class="track-title">Drop Feedback</div>
+          <div class="track-sub">Tell us how it went</div>
+          <div class="track-sub" th:if="${deal.deliveryConfirmedByUser && (deal.feedback == null || #strings.isEmpty(deal.feedback))}">
+            <form id="feedback-form" style="margin-top:8px;">
+              <textarea id="feedback-text" rows="3" style="width:100%; max-width:420px; border:1px solid #cbd5e1; border-radius:8px; padding:8px;" placeholder="Share your experience"></textarea>
+              <button type="button" class="btn-submit" id="submit-feedback-btn" th:data-deal-id="${deal.id}" style="margin-top:8px;">Submit Feedback</button>
+            </form>
+          </div>
+          <div class="track-sub" th:if="${deal.feedback != null && !#strings.isEmpty(deal.feedback)}" th:text="${deal.feedback}">Feedback</div>
+        </div>
+      </div>
     </div>
   </main>
+  <script>
+    const confirmBtn = document.getElementById('confirm-delivery-btn');
+    const feedbackBtn = document.getElementById('submit-feedback-btn');
+    const feedbackText = document.getElementById('feedback-text');
+
+    confirmBtn?.addEventListener('click', async () => {
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Confirming...';
+      const res = await fetch(`/api/deals/${confirmBtn.dataset.dealId}/confirm-delivery`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Confirm Item Received';
+      }
+    });
+
+    feedbackBtn?.addEventListener('click', async () => {
+      const text = feedbackText?.value?.trim() || '';
+      if (!text) return;
+      feedbackBtn.disabled = true;
+      feedbackBtn.textContent = 'Submitting...';
+      const formData = new URLSearchParams();
+      formData.append('feedback', text);
+      const res = await fetch(`/api/deals/${feedbackBtn.dataset.dealId}/feedback`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        feedbackBtn.disabled = false;
+        feedbackBtn.textContent = 'Submit Feedback';
+      }
+    });
+  </script>
 </body>
 </html>

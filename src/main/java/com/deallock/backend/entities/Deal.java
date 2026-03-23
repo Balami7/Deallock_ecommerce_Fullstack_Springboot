@@ -59,6 +59,15 @@ public class Deal {
     private Instant securedAt;
     private BigDecimal paymentProofAmount;
     private Instant paymentProofUploadedAt;
+    private String balancePaymentStatus;
+    private BigDecimal balancePaymentAmount;
+    private Instant balancePaymentUploadedAt;
+    private Instant deliveryInitiatedAt;
+    private boolean deliveryConfirmedByUser;
+    private Instant deliveryConfirmedAt;
+    @Column(length = 2000)
+    private String feedback;
+    private Instant feedbackSubmittedAt;
 
     @Lob
     @Column(columnDefinition = "LONGBLOB")
@@ -74,4 +83,9 @@ public class Deal {
     @Column(columnDefinition = "LONGBLOB")
     private byte[] securedItemPhoto;
     private String securedItemPhotoContentType;
+
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] balancePaymentProof;
+    private String balancePaymentProofContentType;
 }

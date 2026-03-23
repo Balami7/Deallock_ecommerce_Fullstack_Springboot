@@ -73,6 +73,11 @@ public class DealApiController {
                     row.put("paymentStatus", d.getPaymentStatus() == null ? "NOT_PAID" : d.getPaymentStatus());
                     row.put("rejectionReason", d.getRejectionReason());
                     row.put("secured", d.isSecured());
+                    row.put("balancePaymentStatus", d.getBalancePaymentStatus() == null ? "NOT_PAID" : d.getBalancePaymentStatus());
+                    row.put("deliveryInitiatedAt", d.getDeliveryInitiatedAt());
+                    row.put("deliveryConfirmedByUser", d.isDeliveryConfirmedByUser());
+                    row.put("deliveryConfirmedAt", d.getDeliveryConfirmedAt());
+                    row.put("feedback", d.getFeedback());
                     row.put("createdAt", d.getCreatedAt());
                     return row;
                 })
@@ -127,7 +132,9 @@ public class DealApiController {
         deal.setStatus("Pending Approval");
         deal.setCreatedAt(Instant.now());
         deal.setPaymentStatus("NOT_PAID");
+        deal.setBalancePaymentStatus("NOT_PAID");
         deal.setSecured(false);
+        deal.setDeliveryConfirmedByUser(false);
 
         BigDecimal holdingFee = roundMoney(value.multiply(BigDecimal.valueOf(0.05)).multiply(BigDecimal.valueOf(weeks)));
         BigDecimal vatAmount = roundMoney(holdingFee.multiply(BigDecimal.valueOf(0.075)));
@@ -392,6 +399,186 @@ public class DealApiController {
                 "Payment proof uploaded: " + safe(deal.getTitle()));
 
         return ResponseEntity.ok(Map.of("message", "Payment proof uploaded"));
+    }
+
+    @PostMapping(path = "/{id}/balance-payment-proof", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadBalancePaymentProof(@PathVariable("id") Long id,
+                                                       @RequestParam("paymentProof") MultipartFile paymentProof,
+                                                       Principal principal,
+                                                       Authentication authentication) throws Exception {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        var userOpt = userRepository.findByEmail(principal.getName());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        if (paymentProof == null || paymentProof.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Payment proof is required"));
+        }
+        if (paymentProof.getSize() > MAX_UPLOAD_BYTES) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Payment proof must be at most 2MB."));
+        }
+
+        var dealOpt = dealRepository.findById(id);
+        if (dealOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        var deal = dealOpt.get();
+        boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+
+        if (!isAdmin && (deal.getUser() == null || deal.getUser().getId() != userOpt.get().getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        if (!deal.isSecured()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Deal not secured yet"));
+        }
+
+        deal.setBalancePaymentProof(paymentProof.getBytes());
+        deal.setBalancePaymentProofContentType(paymentProof.getContentType());
+        deal.setBalancePaymentUploadedAt(Instant.now());
+        if (deal.getRemainingBalanceAmount() != null) {
+            deal.setBalancePaymentAmount(deal.getRemainingBalanceAmount());
+        }
+        deal.setBalancePaymentStatus("PAID_PENDING_CONFIRMATION");
+        dealRepository.save(deal);
+
+        notifier.notifyUser(deal.getUser(),
+                "Balance payment proof received. We are verifying your payment.",
+                "Balance Payment Proof Received",
+                "Balance payment proof received for: " + safe(deal.getTitle()),
+                "Balance payment proof received. Verifying payment.");
+        notifier.notifyAdmins(
+                "Balance payment proof uploaded: " + safe(deal.getTitle()),
+                "Balance Payment Proof Uploaded",
+                "Balance payment proof uploaded for: " + safe(deal.getTitle()),
+                "Balance payment proof uploaded: " + safe(deal.getTitle()));
+
+        return ResponseEntity.ok(Map.of("message", "Balance payment proof uploaded"));
+    }
+
+    @GetMapping("/{id}/balance-payment-proof")
+    public ResponseEntity<byte[]> balancePaymentProof(@PathVariable("id") Long id,
+                                                      Principal principal,
+                                                      Authentication authentication) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        var userOpt = userRepository.findByEmail(principal.getName());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        var dealOpt = dealRepository.findById(id);
+        if (dealOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        var deal = dealOpt.get();
+        boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        if (!isAdmin && (deal.getUser() == null || deal.getUser().getId() != userOpt.get().getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        if (deal.getBalancePaymentProof() == null || deal.getBalancePaymentProof().length == 0) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        MediaType type = MediaType.APPLICATION_OCTET_STREAM;
+        if (deal.getBalancePaymentProofContentType() != null) {
+            type = MediaType.parseMediaType(deal.getBalancePaymentProofContentType());
+        }
+        return ResponseEntity.ok().contentType(type).body(deal.getBalancePaymentProof());
+    }
+
+    @PostMapping("/{id}/confirm-delivery")
+    public ResponseEntity<?> confirmDelivery(@PathVariable("id") Long id,
+                                             Principal principal,
+                                             Authentication authentication) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        var userOpt = userRepository.findByEmail(principal.getName());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        var dealOpt = dealRepository.findById(id);
+        if (dealOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        var deal = dealOpt.get();
+        boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        if (!isAdmin && (deal.getUser() == null || deal.getUser().getId() != userOpt.get().getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        if (deal.getDeliveryInitiatedAt() == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Delivery not initiated yet"));
+        }
+
+        deal.setDeliveryConfirmedByUser(true);
+        dealRepository.save(deal);
+
+        notifier.notifyUser(deal.getUser(),
+                "Delivery confirmed. Thank you!",
+                "Delivery Confirmed",
+                "You confirmed delivery for: " + safe(deal.getTitle()),
+                "Delivery confirmed for your deal.");
+        notifier.notifyAdmins(
+                "User confirmed delivery: " + safe(deal.getTitle()),
+                "Delivery Confirmed By User",
+                "User confirmed delivery for: " + safe(deal.getTitle()),
+                "User confirmed delivery: " + safe(deal.getTitle()));
+
+        return ResponseEntity.ok(Map.of("message", "Delivery confirmed"));
+    }
+
+    @PostMapping("/{id}/feedback")
+    public ResponseEntity<?> submitFeedback(@PathVariable("id") Long id,
+                                            @RequestParam("feedback") String feedback,
+                                            Principal principal,
+                                            Authentication authentication) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        var userOpt = userRepository.findByEmail(principal.getName());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        var dealOpt = dealRepository.findById(id);
+        if (dealOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        var deal = dealOpt.get();
+        boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        if (!isAdmin && (deal.getUser() == null || deal.getUser().getId() != userOpt.get().getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String trimmed = feedback == null ? "" : feedback.trim();
+        if (trimmed.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Feedback is required"));
+        }
+        if (!deal.isDeliveryConfirmedByUser()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Confirm delivery before sending feedback"));
+        }
+
+        deal.setFeedback(trimmed);
+        deal.setFeedbackSubmittedAt(Instant.now());
+        dealRepository.save(deal);
+        notifier.notifyAdmins(
+                "New feedback submitted: " + safe(deal.getTitle()),
+                "Deal Feedback",
+                "New feedback submitted for: " + safe(deal.getTitle()),
+                "New feedback submitted: " + safe(deal.getTitle()));
+
+        return ResponseEntity.ok(Map.of("message", "Feedback submitted"));
     }
 
     @GetMapping("/{id}/payment-proof")
