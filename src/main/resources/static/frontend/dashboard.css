@@ -194,49 +194,62 @@
 }
 
 
+/* ====================== DASHBOARD LAYOUT ====================== */
 .dashboard-container {
   display: flex;
-  min-height: calc(100vh - var(--header-height, 70px));
+  gap: 20px;
+  min-height: calc(100vh - 85px);
+  padding: 20px;
+  background: #f9fafb;
 }
 
-.sidebar {
+/* LEFT PANEL - PROFILE + Photo Upload */
+.left-panel {
   width: 280px;
-  background: white;
-  border-right: 1px solid #e5e7eb;
-  padding: 24px 16px;
   flex-shrink: 0;
-  margin-top: 85px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 70px;           /* ← This pushes the left panel down */
 }
 
+/* RIGHT PANEL - ACTIVE DEALS */
+.right-panel {
+  width: 280px;
+  flex-shrink: 0;
+  margin-top: 70px;           /* ← This pushes the right panel down */
+}
+
+.right-panel .sidebar-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Common Card Style */
 .sidebar-card {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
   padding: 20px 16px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-  margin-bottom: 18px;
 }
 
+/* ====================== PROFILE SECTION ====================== */
 .profile-section {
   text-align: center;
-  margin-bottom: 40px;
-  padding-top: 70px;
-}
-
-.profile-section.sidebar-card {
-  padding-top: 28px;
-  margin-bottom: 18px;
+  padding: 32px 20px 24px;
 }
 
 .profile-avatar-wrapper {
-  width: 90px;                  
+  width: 90px;
   height: 90px;
-  margin: 0 auto 16px;          
+  margin: 0 auto 16px;
   border-radius: 50%;
   overflow: hidden;
-  border: 4px solid #0f172a;    
-  background: #f3f4f6;          
-  display: flex;                
+  border: 4px solid #0f172a;
+  background: #f3f4f6;
+  display: flex;
   align-items: center;
   justify-content: center;
 }
@@ -244,27 +257,22 @@
 .profile-avatar {
   width: 100% !important;
   height: 100% !important;
-  object-fit: cover;            
-  object-position: center;      
+  object-fit: cover;
+  object-position: center;
   display: block;
 }
 
 .greeting {
   font-size: 1.45rem;
   font-weight: 600;
+  margin: 0 0 8px 0;
 }
 
 .username {
   color: #0f172a;
 }
 
-.active-deals-section h3 {
-  font-size: 1.1rem;
-  color: #1f2937;
-  margin: 0 0 16px 8px;
-  font-weight: 700;
-}
-
+/* Photo Upload Form */
 .profile-upload-form {
   display: flex;
   flex-direction: column;
@@ -288,13 +296,22 @@
   margin-top: 4px;
 }
 
+/* ====================== ACTIVE DEALS SECTION ====================== */
+.active-deals-section h3 {
+  font-size: 1.1rem;
+  color: #1f2937;
+  margin: 0 0 16px 8px;
+  font-weight: 700;
+}
+
 .deals-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 260px;   
+  max-height: 420px;
   overflow-y: auto;
-  padding-right: 4px;  
+  padding-right: 4px;
+  flex: 1;
 }
 
 .deals-list::-webkit-scrollbar {
@@ -306,11 +323,12 @@
   border-radius: 10px;
 }
 
+/* Deal Card Styles */
 .deal-card {
   padding: 14px 16px;
   border-radius: 12px;
   background: #ffffff;
-  border: 1px solid var(--brand-border);
+  border: 1px solid #e5e7eb;
   border-left: 4px solid #cbd5e1;
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
   transition: all 0.18s ease;
@@ -322,7 +340,7 @@
   box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
 }
 
-.deal-card.pending   { border-left-color: #f59e0b; }
+.deal-card.pending { border-left-color: #f59e0b; }
 .deal-card.in-progress { border-left-color: #3b82f6; }
 .deal-card.completed { border-left-color: #10b981; }
 
@@ -337,15 +355,18 @@
   color: #000000;
 }
 
+/* ====================== MAIN CONTENT - LOCK DEAL ====================== */
 .main-content {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px;
   background: #f9fafb;
-  color: #000000;
+  min-height: 400px;
+  padding: 40px 20px;
 }
+
+
 
 .create-deal-card {
   width: 100%;
