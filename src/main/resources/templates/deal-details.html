@@ -21,6 +21,7 @@
       border: 1px solid #dbe7df;
       box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
       border-radius: 16px;
+      padding: 56px 24px 24px;
     }
     .deal-title, strong { color: #111111; }
     .deal-status, .deal-value, .deal-card div { color: #222222; }
@@ -48,7 +49,7 @@
     .subpage-close {
       position: absolute;
       top: 14px;
-      left: 14px;
+      right: 14px;
       width: 34px;
       height: 34px;
       border-radius: 50%;
@@ -62,6 +63,7 @@
       line-height: 1;
       text-decoration: none;
       z-index: 2;
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
     }
     .subpage-close:hover {
       background: #f8fafc;
@@ -95,7 +97,7 @@
 
   <main class="dashboard-container subpage-main">
     <section class="deal-card" style="width:100%; max-width:900px; margin:0 auto;">
-      <a href="/dashboard" class="subpage-close" aria-label="Close">&times;</a>
+      <a href="/dashboard" class="subpage-close" aria-label="Back to dashboard">&#8592;</a>
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
         <h2 class="deal-title" th:text="${deal.title}">Deal Title</h2>
         <span class="deal-status" th:text="${deal.status}">Approved</span>

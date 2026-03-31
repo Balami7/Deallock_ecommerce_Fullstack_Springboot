@@ -14,7 +14,7 @@
       margin: 0 auto;
       padding: 120px 24px 32px;
     }
-    .track-card { max-width: 800px; margin: 0 auto; padding: 20px; border:1px solid #dbe7df; border-radius:16px; box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08); }
+    .track-card { max-width: 800px; margin: 0 auto; padding: 56px 24px 24px; border:1px solid #dbe7df; border-radius:16px; box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08); }
     .track-card { position: relative; }
     .track-item { display:flex; gap:12px; align-items:flex-start; margin:12px 0; }
     .track-dot {
@@ -40,7 +40,7 @@
     .subpage-close {
       position: absolute;
       top: 14px;
-      left: 14px;
+      right: 14px;
       width: 34px;
       height: 34px;
       border-radius: 50%;
@@ -54,6 +54,7 @@
       line-height: 1;
       text-decoration: none;
       z-index: 2;
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
     }
     .subpage-close:hover {
       background: #f8fafc;
@@ -81,7 +82,7 @@
 
   <main class="dashboard-container subpage-main">
     <div class="track-card">
-      <a href="/dashboard" class="subpage-close" aria-label="Close">&times;</a>
+      <a href="/dashboard" class="subpage-close" aria-label="Back to dashboard">&#8592;</a>
       <div class="deal-title" th:text="${deal.title}">Deal Title</div>
 
       <div class="track-item active">
