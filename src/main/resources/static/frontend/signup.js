@@ -243,7 +243,7 @@ const API_BASE = "/api";
             dob:            els.signupForm.dob.value,
             username:       els.signupForm.username.value.trim(),
             email:          els.email.value.trim(),
-            password:       els.signupForm.password.value,
+            CreatePassword:els.signupForm.password.value,
             confirmPassword: els.signupForm.confirmPassword.value,
         };
 
@@ -282,11 +282,11 @@ const API_BASE = "/api";
             valid = false;
         }
         const strongPwd = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-        if (!strongPwd.test(values.password)) {
+        if (!strongPwd.test(values.CreatePassword)) {
             showError(errors.password, "Password must be 8+ chars with upper, lower, number, special");
             valid = false;
         }
-        if (values.confirmPassword !== values.password) {
+        if (values.confirmPassword !== values.CreatePassword) {
             showError(errors.confirm, "Passwords do not match");
             valid = false;
         }
@@ -308,7 +308,7 @@ const API_BASE = "/api";
                     dob:      values.dob,
                     username: values.username,
                     email:    values.email,
-                    password: values.password,
+                    CreatePassword: values.CreatePassword,
                     confirmPassword: values.confirmPassword,
                     
                 })
@@ -337,7 +337,7 @@ const API_BASE = "/api";
             const msg = err.message || "Something went wrong during registration";
             if (msg.toLowerCase().includes("email")) {
                 showError(errors.email, msg);
-            } else if (msg.toLowerCase().includes("password")) {
+            } else if (msg.toLowerCase().includes("Create password")) {
                 showError(errors.confirm, msg);
             } else if (msg.toLowerCase().includes("phone")) {
                 showError(errors.phone, msg);
