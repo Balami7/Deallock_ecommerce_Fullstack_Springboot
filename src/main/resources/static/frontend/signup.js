@@ -243,7 +243,7 @@ const API_BASE = "/api";
             dob:            els.signupForm.dob.value,
             username:       els.signupForm.username.value.trim(),
             email:          els.email.value.trim(),
-            CreatePassword:els.signupForm.password.value,
+            password: els.signupForm.password.value,
             confirmPassword: els.signupForm.confirmPassword.value,
         };
 
@@ -282,11 +282,11 @@ const API_BASE = "/api";
             valid = false;
         }
         const strongPwd = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-        if (!strongPwd.test(values.CreatePassword)) {
+        if (!strongPwd.test(values.password)) {
             showError(errors.password, "Password must be 8+ chars with upper, lower, number, special");
             valid = false;
         }
-        if (values.confirmPassword !== values.CreatePassword) {
+        if (values.confirmPassword !== values.password) {
             showError(errors.confirm, "Passwords do not match");
             valid = false;
         }
@@ -308,7 +308,7 @@ const API_BASE = "/api";
                     dob:      values.dob,
                     username: values.username,
                     email:    values.email,
-                    CreatePassword: values.CreatePassword,
+                    password: values.password,
                     confirmPassword: values.confirmPassword,
                     
                 })
