@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
   const triggers = document.querySelectorAll('.user-trigger');
   triggers.forEach(trigger => {
@@ -20,31 +19,143 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-const dealsList = document.getElementById('deals-list');
+// ====================== DEALS SYSTEM - ACTIVE & CLOSED ======================
+const activeDealsList = document.getElementById('active-deals-list');
+const closedDealsList = document.getElementById('closed-deals-list');
+const dealsMessage = document.getElementById('deals-message');
+const closedDealsMessage = document.getElementById('closed-deals-message');
+
 const form = document.getElementById('new-deal-form');
 const modal = document.getElementById('create-deal-modal');
-const dealsMessage = document.getElementById('deals-message');
 const API_DEALS = '/api/deals';
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024; // 2MB
 const REQUEST_TIMEOUT_MS = 60000;
 
-function openModal() {
-  if (!modal) return;
-  modal.classList.add('active');
-  modal.style.visibility = 'visible';
-  modal.style.opacity = '1';
+let allDeals = [];
+
+// Tab Elements
+const activeTab = document.getElementById('active-tab');
+const closedTab = document.getElementById('closed-tab');
+const activeContent = document.getElementById('active-deals-content');
+const closedContent = document.getElementById('closed-deals-content');
+
+function switchToActive() {
+  activeTab.classList.add('active');
+  closedTab.classList.remove('active');
+  activeContent.classList.add('active');
+  closedContent.classList.remove('active');
+  renderActiveDeals();
 }
 
-function closeModal() {
-  if (!modal) return;
-  modal.classList.remove('active');
-  modal.style.visibility = '';
-  modal.style.opacity = '';
+function switchToClosed() {
+  closedTab.classList.add('active');
+  activeTab.classList.remove('active');
+  closedContent.classList.add('active');
+  activeContent.classList.remove('active');
+  renderClosedDeals();
 }
 
+// Determine if deal is closed
+function isClosedDeal(deal) {
+  const status = (deal.status || '').toString().toLowerCase().trim();
+  const paymentStatus = (deal.paymentStatus || '').toString().toLowerCase();
+  const balanceStatus = (deal.balancePaymentStatus || '').toString().toLowerCase();
+
+  const closedKeywords = ['completed', 'closed', 'delivered', 'finished', 'rejected', 'cancelled', 'declined', 'terminated'];
+
+  if (closedKeywords.some(keyword => status.includes(keyword))) return true;
+
+  // Approved + fully paid deals are considered closed
+  if (status === 'approved' && 
+      (paymentStatus === 'paid_confirmed' || paymentStatus === 'paid') &&
+      (balanceStatus === 'paid_confirmed' || balanceStatus === 'paid' || !deal.secured)) {
+    return true;
+  }
+
+  return false;
+}
+
+// Reusable Deal Card Creator
+function createDealCard(deal, container) {
+  const card = document.createElement('div');
+  const status = (deal.status || 'Pending Approval');
+  const statusLower = status.toLowerCase();
+  const isApproved = statusLower === 'approved';
+  const isPending = statusLower.includes('pending');
+  const isRejected = statusLower === 'rejected';
+
+  const paymentStatus = (deal.paymentStatus || 'NOT_PAID').toLowerCase();
+  const isPaymentPending = paymentStatus === 'paid_pending_confirmation';
+  const isPaymentConfirmed = paymentStatus === 'paid_confirmed';
+
+  const balancePaymentStatus = (deal.balancePaymentStatus || 'NOT_PAID').toLowerCase();
+  const isBalancePaidConfirmed = balancePaymentStatus === 'paid_confirmed';
+  const isBalancePaidPending = balancePaymentStatus === 'paid_pending_confirmation';
+
+  const isSecured = !!deal.secured;
+  const rejectionReason = deal.rejectionReason && String(deal.rejectionReason).trim() 
+    ? String(deal.rejectionReason) : '';
+
+  card.className = `deal-card ${status.toLowerCase().replace(/\s+/g, '-')}`;
+  card.dataset.dealId = deal.id;
+  card.dataset.status = status;
+
+  card.innerHTML = `
+    <div class="deal-title">${deal.title || 'Untitled Deal'}</div>
+    <div class="deal-status">${status}</div>
+    <div class="deal-value">NGN ${Number(deal.value || 0).toLocaleString()}</div>
+    ${isRejected ? `<div class="deal-status" style="color:#b91c1c;">Rejection reason: ${rejectionReason || 'No reason provided.'}</div>` : ''}
+    <div class="deal-actions" style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+      <a class="btn-submit deal-details-link" href="/dashboard/deal/${deal.id}">See Details</a>
+      <a class="btn-submit deal-details-link" href="/dashboard/deal/${deal.id}/track">Track Deal</a>
+      ${isApproved && !isPaymentConfirmed && !isPaymentPending ? `<a class="btn-submit" href="/dashboard/deal/${deal.id}/pay">Pay</a>` : ''}
+      ${isSecured && !isBalancePaidConfirmed && !isBalancePaidPending ? `<a class="btn-submit" href="/dashboard/deal/${deal.id}/balance-pay">Pay Balance</a>` : ''}
+      ${isPaymentPending ? `<span class="deal-status" style="font-weight:600;">Processing</span>` : ''}
+      ${isBalancePaidPending ? `<span class="deal-status" style="font-weight:600;">Balance Processing</span>` : ''}
+      ${isPending ? `<button class="btn-cancel cancel-deal-btn" data-deal-id="${deal.id}" type="button">Cancel Deal</button>` : ''}
+      ${isPaymentConfirmed ? `<span class="deal-status" style="font-weight:600;">Paid</span>` : ''}
+      ${isBalancePaidConfirmed ? `<span class="deal-status" style="font-weight:600;">Balance Paid</span>` : ''}
+    </div>
+  `;
+
+  container.appendChild(card);
+}
+
+function renderActiveDeals() {
+  if (!activeDealsList) return;
+  activeDealsList.innerHTML = '';
+
+  const activeDeals = allDeals.filter(deal => !isClosedDeal(deal));
+
+  if (activeDeals.length === 0) {
+    activeDealsList.innerHTML = '<div class="no-deals">No active deals yet</div>';
+    return;
+  }
+
+  activeDeals.forEach(deal => createDealCard(deal, activeDealsList));
+  makeDealsClickable();
+  wireCancelButtons();
+}
+
+function renderClosedDeals() {
+  if (!closedDealsList) return;
+  closedDealsList.innerHTML = '';
+
+  const closedDeals = allDeals.filter(deal => isClosedDeal(deal));
+
+  if (closedDeals.length === 0) {
+    closedDealsList.innerHTML = '<div class="no-deals">No closed deals yet</div>';
+    return;
+  }
+
+  closedDeals.forEach(deal => createDealCard(deal, closedDealsList));
+}
+
+// Updated loadDeals function
 async function loadDeals() {
-  dealsList.innerHTML = '';
   if (dealsMessage) dealsMessage.textContent = '';
+  if (closedDealsMessage) closedDealsMessage.textContent = '';
+
   try {
     const res = await fetch(API_DEALS, {
       headers: { 'Accept': 'application/json' },
@@ -52,72 +163,27 @@ async function loadDeals() {
       redirect: 'follow',
       cache: 'no-store'
     });
+
     if (res.redirected || (res.url && res.url.includes('/login'))) {
       if (dealsMessage) dealsMessage.textContent = 'Session expired. Please log in again.';
       return;
     }
+
     if (!res.ok) {
-      if (dealsMessage) {
-        dealsMessage.textContent = res.status === 401
-          ? 'Please log in again to view your deals.'
-          : 'Could not load deals.';
-      } else {
-        dealsList.innerHTML = '<div class="no-deals">Could not load deals</div>';
-      }
+      const msg = res.status === 401 ? 'Please log in again to view your deals.' : 'Could not load deals.';
+      if (dealsMessage) dealsMessage.textContent = msg;
       return;
     }
+
     const deals = await res.json();
-    if (!Array.isArray(deals) || deals.length === 0) {
-      dealsList.innerHTML = '<div class="no-deals">No active deals yet</div>';
-      return;
-    }
-    deals.forEach(deal => {
-      const card = document.createElement('div');
-      const status = (deal.status || 'Pending Approval');
-      const statusLower = status.toLowerCase();
-      const isApproved = statusLower === 'approved';
-      const isPending = statusLower.includes('pending');
-      const isRejected = statusLower === 'rejected';
-      const paymentStatus = (deal.paymentStatus || 'NOT_PAID').toLowerCase();
-      const isPaymentPending = paymentStatus === 'paid_pending_confirmation';
-      const isPaymentConfirmed = paymentStatus === 'paid_confirmed';
-      const balancePaymentStatus = (deal.balancePaymentStatus || 'NOT_PAID').toLowerCase();
-      const isBalancePaidConfirmed = balancePaymentStatus === 'paid_confirmed';
-      const isBalancePaidPending = balancePaymentStatus === 'paid_pending_confirmation';
-      const isSecured = !!deal.secured;
-      const rejectionReason = deal.rejectionReason && String(deal.rejectionReason).trim()
-        ? String(deal.rejectionReason)
-        : '';
-      card.className = `deal-card ${status.toLowerCase().replace(/\s+/g, '-')}`;
-      card.dataset.dealId = deal.id;
-      card.dataset.status = status;
-      card.innerHTML = `
-        <div class="deal-title">${deal.title || 'Untitled Deal'}</div>
-        <div class="deal-status">${status}</div>
-        <div class="deal-value">NGN ${Number(deal.value || 0).toLocaleString()}</div>
-        ${isRejected ? `<div class="deal-status" style="color:#b91c1c;">Rejection reason: ${rejectionReason || 'No reason provided.'}</div>` : ''}
-        <div class="deal-actions" style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
-          <a class="btn-submit deal-details-link" href="/dashboard/deal/${deal.id}">See Details</a>
-          <a class="btn-submit deal-details-link" href="/dashboard/deal/${deal.id}/track">Track Deal</a>
-          ${isApproved && !isPaymentConfirmed && !isPaymentPending ? `<a class="btn-submit" href="/dashboard/deal/${deal.id}/pay">Pay</a>` : ''}
-          ${isSecured && !isBalancePaidConfirmed && !isBalancePaidPending ? `<a class="btn-submit" href="/dashboard/deal/${deal.id}/balance-pay">Pay Balance</a>` : ''}
-          ${isPaymentPending ? `<span class="deal-status" style="font-weight:600;">Processing</span>` : ''}
-          ${isBalancePaidPending ? `<span class="deal-status" style="font-weight:600;">Balance Processing</span>` : ''}
-          ${isPending ? `<button class="btn-cancel cancel-deal-btn" data-deal-id="${deal.id}" type="button">Cancel Deal</button>` : ''}
-          ${isPaymentConfirmed ? `<span class="deal-status" style="font-weight:600;">Paid</span>` : ''}
-          ${isBalancePaidConfirmed ? `<span class="deal-status" style="font-weight:600;">Balance Paid</span>` : ''}
-        </div>
-      `;
-      dealsList.appendChild(card);
-    });
-    makeDealsClickable();
-    wireCancelButtons();
+    allDeals = Array.isArray(deals) ? deals : [];
+
+    renderActiveDeals();
+    renderClosedDeals();
+
   } catch (e) {
-    if (dealsMessage) {
-      dealsMessage.textContent = 'Could not load deals.';
-    } else {
-      dealsList.innerHTML = '<div class="no-deals">Could not load deals</div>';
-    }
+    console.error(e);
+    if (dealsMessage) dealsMessage.textContent = 'Could not load deals.';
   }
 }
 
@@ -125,6 +191,7 @@ async function saveDeal(formData) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   let res;
+
   try {
     res = await fetch(API_DEALS, {
       method: 'POST',
@@ -156,7 +223,8 @@ async function saveDeal(formData) {
     const msg = data && data.message ? data.message : 'Failed to create deal. Please try again.';
     throw new Error(msg);
   }
-  await loadDeals();
+
+  await loadDeals();   // Refresh both Active and Closed lists
 }
 
 form?.addEventListener('submit', async e => {
@@ -165,6 +233,7 @@ form?.addEventListener('submit', async e => {
   const formData = new FormData(form);
   const submitBtn = form.querySelector('button[type="submit"]');
   const originalBtnText = submitBtn ? submitBtn.textContent : '';
+
   const title = formData.get('deal-title');
   const client = formData.get('client-name');
   const sellerPhone = formData.get('seller-phone');
@@ -214,17 +283,41 @@ form?.addEventListener('submit', async e => {
   }
 });
 
+function openModal() {
+  if (!modal) return;
+  modal.classList.add('active');
+  modal.style.visibility = 'visible';
+  modal.style.opacity = '1';
+}
+
+function closeModal() {
+  if (!modal) return;
+  modal.classList.remove('active');
+  modal.style.visibility = '';
+  modal.style.opacity = '';
+}
 
 document.getElementById('open-create-modal')?.addEventListener('click', openModal);
 document.getElementById('close-modal')?.addEventListener('click', closeModal);
 document.getElementById('cancel-create')?.addEventListener('click', closeModal);
+
 modal?.addEventListener('click', e => {
   if (e.target === modal) closeModal();
 });
 
+// Tab Click Listeners
+if (activeTab && closedTab) {
+  activeTab.addEventListener('click', switchToActive);
+  closedTab.addEventListener('click', switchToClosed);
+}
 
+// Default to Active Deals
+switchToActive();
+
+// Initial Load
 loadDeals();
 
+// ====================== FILE PREVIEW ======================
 const fileInput = document.getElementById('item-photo');
 const uploadArea = document.getElementById('upload-area');
 const previewContainer = document.getElementById('preview-container');
@@ -236,7 +329,6 @@ function showPreview(file) {
     alert('Please select an image file');
     return;
   }
-
   const reader = new FileReader();
   reader.onload = e => {
     previewImg.src = e.target.result;
@@ -252,22 +344,16 @@ function clearPreview() {
   fileInput.value = '';
 }
 
-
 fileInput.addEventListener('change', e => {
-  if (e.target.files[0]) {
-    showPreview(e.target.files[0]);
-  }
+  if (e.target.files[0]) showPreview(e.target.files[0]);
 });
-
 
 uploadArea.addEventListener('dragover', e => {
   e.preventDefault();
   uploadArea.classList.add('dragover');
 });
 
-uploadArea.addEventListener('dragleave', () => {
-  uploadArea.classList.remove('dragover');
-});
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
 
 uploadArea.addEventListener('drop', e => {
   e.preventDefault();
@@ -278,27 +364,26 @@ uploadArea.addEventListener('drop', e => {
   }
 });
 
-
 removeBtn.addEventListener('click', clearPreview);
 
-
-const valueInput     = document.getElementById('deal-value');
-const weeksSelect    = document.getElementById('weeks');
-const customWeeks    = document.getElementById('custom-weeks');
-const customGroup    = document.getElementById('custom-weeks-group');
+// ====================== PAYMENT PREVIEW ======================
+const valueInput = document.getElementById('deal-value');
+const weeksSelect = document.getElementById('weeks');
+const customWeeks = document.getElementById('custom-weeks');
+const customGroup = document.getElementById('custom-weeks-group');
 const sellerAddressInput = document.getElementById('seller-address');
 const deliveryAddressInput = document.getElementById('delivery-address');
 const itemSizeInput = document.getElementById('item-size');
-const breakdown      = document.getElementById('breakdown');
+const breakdown = document.getElementById('breakdown');
 
-const displayValue   = document.getElementById('display-value');
+const displayValue = document.getElementById('display-value');
 const displayService = document.getElementById('display-service-fee');
 const displayLogistics = document.getElementById('display-logistics-fee');
 const displayUpfrontDue = document.getElementById('display-upfront-due');
-const displayTotal   = document.getElementById('display-total');
+const displayTotal = document.getElementById('display-total');
 
-const upfrontEl      = document.getElementById('upfront-amount');
-const weeklyCountEl  = document.getElementById('weekly-count');
+const upfrontEl = document.getElementById('upfront-amount');
+const weeklyCountEl = document.getElementById('weekly-count');
 const weeklyAmountEl = document.getElementById('weekly-amount');
 
 function updatePaymentPreview() {
@@ -327,22 +412,22 @@ function updatePaymentPreview() {
   }
 
   const serviceFee = value * 0.05 * weeks;
-  const vatBase    = serviceFee;
-  const vat        = vatBase * 0.075;
-  const logistics  = estimateLogisticsFee();
+  const vatBase = serviceFee;
+  const vat = vatBase * 0.075;
+  const logistics = estimateLogisticsFee();
   const upfrontDue = (value * 0.5) + logistics;
   const grandTotal = value + serviceFee + vat + logistics;
-  const remaining  = grandTotal - upfrontDue;
+  const remaining = grandTotal - upfrontDue;
 
-  displayValue.textContent   = 'NGN ' + value.toLocaleString();
+  displayValue.textContent = 'NGN ' + value.toLocaleString();
   displayService.textContent = 'NGN ' + (serviceFee + vat).toLocaleString();
   displayLogistics.textContent = 'NGN ' + logistics.toLocaleString();
   displayUpfrontDue.textContent = 'NGN ' + upfrontDue.toLocaleString();
-  displayTotal.textContent   = 'NGN ' + grandTotal.toLocaleString();
+  displayTotal.textContent = 'NGN ' + grandTotal.toLocaleString();
 
   const weekly = weeks > 0 ? remaining / weeks : 0;
 
-  upfrontEl.textContent     = 'NGN ' + upfrontDue.toFixed(0).toLocaleString();
+  upfrontEl.textContent = 'NGN ' + upfrontDue.toFixed(0).toLocaleString();
   weeklyCountEl.textContent = weeks;
   weeklyAmountEl.textContent = 'NGN ' + weekly.toFixed(0).toLocaleString();
 
@@ -351,13 +436,12 @@ function updatePaymentPreview() {
 
 function resetAllDisplays() {
   displayValue.textContent = displayService.textContent = 
-  displayTotal.textContent = 
-  displayLogistics.textContent = displayUpfrontDue.textContent =
-  upfrontEl.textContent = weeklyAmountEl.textContent = 'NGN 0';
+  displayTotal.textContent = displayLogistics.textContent = 
+  displayUpfrontDue.textContent = upfrontEl.textContent = 
+  weeklyAmountEl.textContent = 'NGN 0';
   
   breakdown.style.display = 'none';
 }
-
 
 valueInput.addEventListener('input', updatePaymentPreview);
 weeksSelect.addEventListener('change', updatePaymentPreview);
@@ -365,7 +449,6 @@ customWeeks.addEventListener('input', updatePaymentPreview);
 sellerAddressInput?.addEventListener('input', updatePaymentPreview);
 deliveryAddressInput?.addEventListener('input', updatePaymentPreview);
 itemSizeInput?.addEventListener('change', updatePaymentPreview);
-
 
 updatePaymentPreview();
 
@@ -390,57 +473,54 @@ function estimateLogisticsFee() {
   return Math.round(baseFee * distanceFactor);
 }
 
-
+// ====================== DEAL CARD INTERACTIONS ======================
 function makeDealsClickable() {
-  const dealsList = document.getElementById('deals-list');
-  if (!dealsList) return;
+  // Make clickable for both lists
+  const allLists = [activeDealsList, closedDealsList].filter(Boolean);
+  
+  allLists.forEach(list => {
+    if (!list) return;
+    const dealCards = list.querySelectorAll('.deal-card');
 
-  const dealCards = dealsList.querySelectorAll('.deal-card');
+    dealCards.forEach(card => {
+      const status = (card.dataset.status || '').toLowerCase();
+      const isApproved = status === 'approved';
 
-  dealCards.forEach(card => {
-    const status = (card.dataset.status || '').toLowerCase();
-    const isApproved = status === 'approved';
-    if (!isApproved) {
-      card.style.cursor = 'default';
-      return;
-    }
-    card.style.cursor = 'pointer';
-
-    card.addEventListener('mouseenter', () => {
-      card.style.transform = 'translateY(-3px)';
-      card.style.boxShadow = '0 8px 20px rgba(0,0,0,0.08)';
-      card.style.transition = 'all 0.18s ease';
-    });
-
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = '';
-      card.style.boxShadow = '';
-    });
-
-    card.addEventListener('click', (e) => {
-      if (e.target.closest('button, a')) return;
-
-      const titleEl = card.querySelector('.deal-title');
-      if (!titleEl) return;
-
-      const titleText = titleEl.textContent.trim();
-
-      const idMatch = titleText.match(/(?:#|Deal\s*#?|Order\s*)?(\d+)/i);
-      const dealId = idMatch ? idMatch[1] : card.dataset.dealId;
-
-      if (!dealId) {
-        console.warn('Could not extract deal ID from:', titleText);
+      if (!isApproved) {
+        card.style.cursor = 'default';
         return;
       }
 
-      window.location.href = `/dashboard/deal/${dealId}`;
+      card.style.cursor = 'pointer';
+
+      card.addEventListener('mouseenter', () => {
+        card.style.transform = 'translateY(-3px)';
+        card.style.boxShadow = '0 8px 20px rgba(0,0,0,0.08)';
+        card.style.transition = 'all 0.18s ease';
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+        card.style.boxShadow = '';
+      });
+
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('button, a')) return;
+
+        const titleEl = card.querySelector('.deal-title');
+        if (!titleEl) return;
+
+        const titleText = titleEl.textContent.trim();
+        const idMatch = titleText.match(/(?:#|Deal\s*#?|Order\s*)?(\d+)/i);
+        const dealId = idMatch ? idMatch[1] : card.dataset.dealId;
+
+        if (dealId) {
+          window.location.href = `/dashboard/deal/${dealId}`;
+        }
+      });
     });
   });
 }
-
-renderDeals = (deals) => {
-  makeDealsClickable();
-};
 
 function confirmCancelDialog() {
   return new Promise(resolve => {
@@ -476,26 +556,31 @@ function confirmCancelDialog() {
 async function handleCancelDealClick(btn) {
   const dealId = btn.getAttribute('data-deal-id');
   if (!dealId) return;
+
   const ok = await confirmCancelDialog();
   if (!ok) return;
+
   const originalText = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Canceling...';
   if (dealsMessage) dealsMessage.textContent = '';
+
   try {
     const res = await fetch(`${API_DEALS}/${dealId}/cancel`, {
       method: 'POST',
       credentials: 'include',
       redirect: 'follow'
     });
+
     if (!res.ok) {
       if (dealsMessage) dealsMessage.textContent = 'Failed to cancel deal.';
       btn.disabled = false;
       btn.textContent = originalText;
       return;
     }
+
     if (dealsMessage) dealsMessage.textContent = 'Deal canceled.';
-    await loadDeals();
+    await loadDeals();   // Refresh lists after cancel
   } catch (e) {
     if (dealsMessage) dealsMessage.textContent = 'Failed to cancel deal.';
     btn.disabled = false;
@@ -510,70 +595,33 @@ function wireCancelButtons() {
   });
 }
 
-dealsList?.addEventListener('click', (e) => {
-  const btn = e.target.closest('.cancel-deal-btn');
-  if (!btn) return;
-  e.preventDefault();
-  e.stopPropagation();
-  handleCancelDealClick(btn);
-});
-
+// Cancel button event listeners
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('.cancel-deal-btn');
-  if (!btn) return;
-  e.preventDefault();
-  e.stopPropagation();
-  handleCancelDealClick(btn);
+  if (btn) {
+    e.preventDefault();
+    e.stopPropagation();
+    handleCancelDealClick(btn);
+  }
 });
 
-
-document.addEventListener('DOMContentLoaded', () => {
-  const activeTab = document.getElementById('active-tab');
-  const closedTab = document.getElementById('closed-tab');
-  
-  const activeContent = document.getElementById('active-deals-content');
-  const closedContent = document.getElementById('closed-deals-content');
-
-  function switchToActive() {
-    activeTab.classList.add('active');
-    closedTab.classList.remove('active');
-    
-    activeContent.classList.add('active');
-    closedContent.classList.remove('active');
-  }
-
-  function switchToClosed() {
-    closedTab.classList.add('active');
-    activeTab.classList.remove('active');
-    
-    closedContent.classList.add('active');
-    activeContent.classList.remove('active');
-  }
-
-  // Event Listeners
-  activeTab.addEventListener('click', switchToActive);
-  closedTab.addEventListener('click', switchToClosed);
-
-  // Optional: Set Active Deals as default
-  // switchToActive();
-});
-
-
+// Profile Settings (kept as you had it)
 document.addEventListener('DOMContentLoaded', function() {
-    const btn = document.getElementById('profile-settings-btn');
-    const section = document.getElementById('profile-upload-section');
+  const btn = document.getElementById('profile-settings-btn');
+  const section = document.getElementById('profile-upload-section');
 
+  if (btn && section) {
     btn.addEventListener('click', function() {
-        if (section.style.display === 'none' || section.style.display === '') {
-            section.style.display = 'block';
-            btn.textContent = 'Hide Profile Settings';   // Optional: nicer feedback
-        } else {
-            section.style.display = 'none';
-            btn.textContent = 'Profile Settings';
-        }
+      if (section.style.display === 'none' || section.style.display === '') {
+        section.style.display = 'block';
+        btn.textContent = 'Hide Profile Settings';
+      } else {
+        section.style.display = 'none';
+        btn.textContent = 'Profile Settings';
+      }
     });
+  }
 });
 
-
-
+// Final initialization
 document.addEventListener('DOMContentLoaded', makeDealsClickable);
