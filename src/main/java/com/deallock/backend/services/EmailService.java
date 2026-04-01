@@ -41,11 +41,11 @@ public class EmailService {
     }
 
     public void sendOtp(String email, String otp) {
-        send(email, "Your OTP Code", "Your OTP is: " + otp);
+        send(email, "DealLock OTP", "Your OTP is: " + otp);
     }
 
     public void sendActivationLink(String email, String link) {
-        send(email, "Activate your account", "Click: " + link);
+        send(email, "DealLock Activation", "Click: " + link);
     }
 
     public void sendLoginAlert(String email, String details) {

@@ -77,9 +77,6 @@
                 <label class="signup-label">Phone Number</label>
                 <input th:field="${registerDto.phone}" class="signup-input" type="tel" id="phone" placeholder="e.g. +2348012345678" required>
                 <div class="signup-error" id="phoneError"></div>
-                <button type="button" class="action-btn get-code-btn" id="getCodeBtn" style="display:none; margin-top:7px;" disabled>
-                    Get Otp
-                </button>
             </div>
 
             <div class="signup-form-group">
@@ -88,6 +85,9 @@
                     <label><input type="radio" name="otpChannel" value="email" checked> Email</label>
                     <label><input type="radio" name="otpChannel" value="phone"> Phone</label>
                 </div>
+                <button type="button" class="action-btn get-code-btn" id="getCodeBtn" style="display:none; margin-top:7px;" disabled>
+                    Get Otp
+                </button>
             </div>
 
             <div id="otpSection" style="display:none; margin-top:16px;">

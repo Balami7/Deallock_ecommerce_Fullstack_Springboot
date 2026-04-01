@@ -103,7 +103,7 @@ function createDealCard(deal, container) {
   card.innerHTML = `
     <div class="deal-title">${deal.title || 'Untitled Deal'}</div>
     <div class="deal-status">${status}</div>
-    <div class="deal-value">NGN ${Number(deal.value || 0).toLocaleString()}</div>
+    <div class="deal-value">₦ ${Number(deal.value || 0).toLocaleString()}</div>
     ${isRejected ? `<div class="deal-status" style="color:#b91c1c;">Rejection reason: ${rejectionReason || 'No reason provided.'}</div>` : ''}
     <div class="deal-actions" style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
       <a class="btn-submit deal-details-link" href="/dashboard/deal/${deal.id}">See Details</a>
@@ -442,9 +442,9 @@ function updatePaymentPreview() {
 
   const weekly = weeks > 0 ? remaining / weeks : 0;
 
-  upfrontEl.textContent = 'NGN ' + upfrontDue.toFixed(0).toLocaleString();
+  upfrontEl.textContent = '\u20A6 ' + upfrontDue.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   weeklyCountEl.textContent = weeks;
-  weeklyAmountEl.textContent = 'NGN ' + weekly.toFixed(0).toLocaleString();
+  weeklyAmountEl.textContent = '\u20A6 ' + weekly.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   breakdown.style.display = 'block';
 }
@@ -453,7 +453,7 @@ function resetAllDisplays() {
   displayValue.textContent = displayService.textContent = 
   displayTotal.textContent = displayLogistics.textContent = 
   displayUpfrontDue.textContent = upfrontEl.textContent = 
-  weeklyAmountEl.textContent = 'NGN 0';
+  weeklyAmountEl.textContent = '\u20A6 0.00';
   
   breakdown.style.display = 'none';
 }
@@ -640,3 +640,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Final initialization
 document.addEventListener('DOMContentLoaded', makeDealsClickable);
+
+
