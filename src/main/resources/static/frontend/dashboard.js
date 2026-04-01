@@ -387,7 +387,7 @@ const weeklyCountEl = document.getElementById('weekly-count');
 const weeklyAmountEl = document.getElementById('weekly-amount');
 
 function updatePaymentPreview() {
-  const value = parseFloat(valueInput.value) || 0;
+  const value = parseFloat(valueInput.value.replace(/,/g, '')) || 0;
   if (value < 1000) {
     resetAllDisplays();
     return;
@@ -419,11 +419,26 @@ function updatePaymentPreview() {
   const grandTotal = value + serviceFee + vat + logistics;
   const remaining = grandTotal - upfrontDue;
 
-  displayValue.textContent = 'NGN ' + value.toLocaleString();
-  displayService.textContent = 'NGN ' + (serviceFee + vat).toLocaleString();
-  displayLogistics.textContent = 'NGN ' + logistics.toLocaleString();
-  displayUpfrontDue.textContent = 'NGN ' + upfrontDue.toLocaleString();
-  displayTotal.textContent = 'NGN ' + grandTotal.toLocaleString();
+  displayValue.textContent = '₦ ' + value.toLocaleString('en-NG', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+  });
+  displayService.textContent = '₦ ' + (serviceFee + vat).toLocaleString('en-NG', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+  });
+  displayLogistics.textContent = '₦ ' + logistics.toLocaleString('en-NG', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+  });
+  displayUpfrontDue.textContent = '₦ ' + upfrontDue.toLocaleString('en-NG', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+  });
+  displayTotal.textContent = '₦ ' + grandTotal.toLocaleString('en-NG', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+  });
 
   const weekly = weeks > 0 ? remaining / weeks : 0;
 
