@@ -89,9 +89,9 @@ Create a database and user that match the defaults in `application.yaml`, or ove
 
 Example local defaults:
 
-- Database: `deallock`
-- Username: `deallock`
-- Password: `deallock_pass`
+- Database: `
+- Username: `
+- Password: `
 
 ### 2. Optional environment variables
 
