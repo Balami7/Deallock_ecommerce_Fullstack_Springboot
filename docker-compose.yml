@@ -27,6 +27,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      ai-agent: {}
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-deallock}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
@@ -41,8 +42,21 @@ services:
       TERMII_BASE_URL: ${TERMII_BASE_URL:-https://api.ng.termii.com/api}
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
       APP_ADMIN_PHONES: ${APP_ADMIN_PHONES:-}
+      AI_AGENT_URL: ${AI_AGENT_URL:http://ai-agent:8000}
+      AI_AGENT_API_KEY: ${AI_AGENT_API_KEY:-}
     ports:
       - "8080:8080"
+
+  ai-agent:
+    build:
+      context: ./ai-agent
+      dockerfile: Dockerfile
+    container_name: deallock-ai-agent
+    restart: unless-stopped
+    environment:
+      AI_AGENT_API_KEY: ${AI_AGENT_API_KEY:-}
+    ports:
+      - "8000:8000"
 
 volumes:
   db_data:

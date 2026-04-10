@@ -27,6 +27,22 @@ public class PageController {
     @GetMapping("/terms")     public String terms()     { return "terms"; }
     @GetMapping("/ourteam")   public String ourteam()   { return "ourteam"; }
 
+    @GetMapping("/ai-agent")
+    public String aiAgent(Model model, Principal principal) {
+        if (principal == null) {
+            return "redirect:/login";
+        }
+        var userOpt = userRepository.findByEmail(principal.getName());
+        if (userOpt.isEmpty()) {
+            return "redirect:/login";
+        }
+
+        model.addAttribute("currentUser", userOpt.get());
+        model.addAttribute("isAdmin", "ROLE_ADMIN".equals(userOpt.get().getRole()));
+        model.addAttribute("notificationCount", notificationService.countUnread(userOpt.get()));
+        return "ai-agent";
+    }
+
     @GetMapping("/dashboard")
     public String dashboard(Model model, Principal principal) {
         if (principal == null) {

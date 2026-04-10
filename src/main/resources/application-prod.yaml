@@ -33,6 +33,11 @@ app:
   base-url: https://deallockecommercefullstackspringboot-production.up.railway.app
   admin-phones: ""
 
+ai:
+  agent:
+    url: ${AI_AGENT_URL:http://ai-agent:8000}
+    api-key: ${AI_AGENT_API_KEY:}
+
 termii:
   base-url: ${TERMII_BASE_URL:https://api.ng.termii.com/api}
   api-key: ${TERMII_API_KEY:}

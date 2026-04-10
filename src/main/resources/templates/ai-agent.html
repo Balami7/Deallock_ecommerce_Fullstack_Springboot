@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>AI Agent</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; }
+        textarea { width: 100%; min-height: 140px; margin-bottom: 1rem; }
+        button { padding: 0.7rem 1.2rem; }
+        #response { white-space: pre-wrap; border: 1px solid #ddd; padding: 1rem; min-height: 100px; background: #fafafa; }
+    </style>
+</head>
+<body>
+<h1>AI Agent</h1>
+<p>Ask the AI agent a question about deals, pricing, or workflow.</p>
+<textarea id="prompt" placeholder="Type your prompt here..."></textarea>
+<button id="send">Send</button>
+<div id="status"></div>
+<h2>Answer</h2>
+<div id="response"></div>
+<script>
+    document.getElementById('send').addEventListener('click', async () => {
+        const prompt = document.getElementById('prompt').value.trim();
+        if (!prompt) {
+            document.getElementById('status').textContent = 'Please enter a prompt.';
+            return;
+        }
+        document.getElementById('status').textContent = 'Sending...';
+        document.getElementById('response').textContent = '';
+        try {
+            const result = await fetch('/api/ai/query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prompt })
+            });
+            const body = await result.json();
+            if (!result.ok) {
+                document.getElementById('status').textContent = body.error || 'AI request failed';
+                return;
+            }
+            document.getElementById('status').textContent = 'Response received.';
+            document.getElementById('response').textContent = body.response || '';
+        } catch (err) {
+            document.getElementById('status').textContent = 'Unable to contact AI service.';
+        }
+    });
+</script>
+</body>
+</html>

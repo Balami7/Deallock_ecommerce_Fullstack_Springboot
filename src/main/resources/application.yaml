@@ -31,3 +31,8 @@ server:
 app:
   base-url: http://localhost:8080
   admin-emails: ""
+
+ai:
+  agent:
+    url: http://localhost:8000
+    api-key: ${AI_AGENT_API_KEY:}
