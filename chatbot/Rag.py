@@ -1,26 +1,32 @@
 from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
+import faiss
 import numpy as np
 from knowledge_base import documents
 
-# Load model
-model = SentenceTransformer("all-MiniLM-L6-v2")
+# Better model
+model = SentenceTransformer("all-mpnet-base-v2")
 
-# Prepare embeddings once
-questions = [doc["question"] for doc in documents]
-embeddings = model.encode(questions)
+# Prepare text
+texts = [doc["question"] + " " + doc["answer"] for doc in documents]
+
+# Create embeddings
+embeddings = model.encode(texts)
+
+# Convert to numpy
+embeddings = np.array(embeddings).astype("float32")
+
+# Build FAISS index
+index = faiss.IndexFlatL2(embeddings.shape[1])
+index.add(embeddings)
+
 
 def search(query):
-    query_embedding = model.encode([query])
+    query_vector = model.encode([query]).astype("float32")
 
-    scores = cosine_similarity(query_embedding, embeddings)[0]
+    distances, indices = index.search(query_vector, k=3)
 
-    best_idx = np.argmax(scores)
-    best_score = scores[best_idx]
+    results = []
+    for i in indices[0]:
+        results.append(documents[i]["answer"])
 
-    print("DEBUG SCORE:", best_score)
-
-    if best_score < 0.20:
-        return ["I don't have enough information on that yet."]
-
-    return [documents[best_idx]["answer"]]
+    return results
